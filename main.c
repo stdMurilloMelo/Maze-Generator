@@ -4,8 +4,6 @@
 #include <stdlib.h>
 #include "maze.h"
 
-#define offset(x0, y0) (m_stack.array[m_stack.top].y + y0) * MazeWidth + (m_stack.array[m_stack.top].x + x0)
-
 // gcc -o main main.c -I/mingw64/include/SDL2 -L/mingw64/lib -lmingw32 -lSDL2main -lSDL2
 
 void drawPseudoPixel(SDL_Renderer *renderer, int x, int y, int r, int g, int b, int size)
@@ -29,9 +27,9 @@ int main(int argc, char *argv[])
     SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
     // Maze parameters
-    unsigned char MazeWidth = 10, MazeHeight = 10, NumVisitedCells, PathWidth = 3;
-    unsigned char *m_cells;
-    m_cells = (unsigned char *)calloc(MazeWidth * MazeHeight, sizeof(unsigned char));
+    unsigned int MazeWidth = 35, MazeHeight = 20, NumVisitedCells, PathWidth = 3;
+    unsigned int *m_cells;
+    m_cells = (unsigned int *)calloc(MazeWidth * MazeHeight, sizeof(unsigned int));
     MazeStack m_stack;
     init_MazeStack(&m_stack, MazeWidth * MazeHeight);
     maze_stack_push(&m_stack, 0, 0);
@@ -39,11 +37,12 @@ int main(int argc, char *argv[])
     NumVisitedCells = 1;
 
     // Create Maze
+    int last_cell_dir, count_repeated__cell_dir = 0, max_repeated_cell_dir;
     while (NumVisitedCells < MazeWidth * MazeHeight)
     {
         // Create a set of unvisted neighbours
         NeighboursStack neighbours;
-        init_NeighboursStack(&neighbours, 4);
+        init_NeighboursStack(&neighbours);
         // North neighbour
         if (m_stack.array[m_stack.top].y > 0 && (m_cells[offset(0, -1)] & CELL_VISITED) == 0)
             neighbours_stack_push(&neighbours, 0);
@@ -63,6 +62,21 @@ int main(int argc, char *argv[])
             // Choose one available neighbour at random
             srand(time(NULL)); // Seed the random number generator with the current time
             int next_cell_dir = neighbours.array[rand() % (neighbours.top + 1)];
+            max_repeated_cell_dir = rand() % 10;
+
+            if (next_cell_dir == last_cell_dir)
+            {
+                count_repeated__cell_dir++;
+            }
+            if ((count_repeated__cell_dir >= max_repeated_cell_dir && neighbours.top > 0) || (rand() % 4 == 0 && neighbours.top > 0))
+            {
+                do
+                {
+                    next_cell_dir = neighbours.array[rand() % (neighbours.top + 1)];
+                } while (next_cell_dir == last_cell_dir);
+
+                count_repeated__cell_dir = 0;
+            }
 
             switch (next_cell_dir)
             {
@@ -91,11 +105,13 @@ int main(int argc, char *argv[])
                 break;
             }
 
+            last_cell_dir = next_cell_dir;
+
             NumVisitedCells++;
         }
         else
         {
-            // No available neighbours so backtrack!
+            // No available neighbours so backtrack
             maze_stack_pop(&m_stack);
         }
         // Draw maze
@@ -108,21 +124,22 @@ int main(int argc, char *argv[])
                     for (size_t py = 0; py < PathWidth; py++)
                     {
                         if (m_cells[y * MazeWidth + x] & CELL_VISITED)
-                            drawPseudoPixel(renderer, x * (PathWidth + 1) + px, y * (PathWidth + 1) + py, 0, 0, 255, 8);
+                            drawPseudoPixel(renderer, x * (PathWidth + 1) + px, y * (PathWidth + 1) + py, 0, 0, 255, 6);
                         else
-                            drawPseudoPixel(renderer, x * (PathWidth + 1) + px, y * (PathWidth + 1) + py, 255, 0, 0, 8);
+                            drawPseudoPixel(renderer, x * (PathWidth + 1) + px, y * (PathWidth + 1) + py, 255, 0, 0, 6);
                     }
                 }
 
                 for (int p = 0; p < PathWidth; p++)
                 {
                     if (m_cells[y * MazeWidth + x] & CELL_PATH_S)
-                        drawPseudoPixel(renderer, x * (PathWidth + 1) + p, y * (PathWidth + 1) + PathWidth, 0, 0, 255, 8); // Draw South Passage
+                        drawPseudoPixel(renderer, x * (PathWidth + 1) + p, y * (PathWidth + 1) + PathWidth, 0, 0, 255, 6); // Draw South Passage
                     if (m_cells[y * MazeWidth + x] & CELL_PATH_E)
-                        drawPseudoPixel(renderer, x * (PathWidth + 1) + PathWidth, y * (PathWidth + 1) + p, 0, 0, 255, 8); // Draw East Passage
+                        drawPseudoPixel(renderer, x * (PathWidth + 1) + PathWidth, y * (PathWidth + 1) + p, 0, 0, 255, 6); // Draw East Passage
                 }
             }
         }
+        SDL_RenderPresent(renderer);
     }
 
     int running = 1;
@@ -184,8 +201,6 @@ int main(int argc, char *argv[])
                 }
             }
         }
-        
-        SDL_RenderPresent(renderer);
     }
 
     SDL_DestroyRenderer(renderer);

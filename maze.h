@@ -1,5 +1,7 @@
 #include <stdlib.h>
 
+#define offset(x0, y0) (m_stack.array[m_stack.top].y + y0) * MazeWidth + (m_stack.array[m_stack.top].x + x0)
+
 enum
 {
     CELL_PATH_N = 0b1,
@@ -11,8 +13,8 @@ enum
 
 typedef struct cell_pair
 {
-    unsigned char x;
-    unsigned char y;
+    unsigned int x;
+    unsigned int y;
 }CellPair;
 
 typedef struct maze_stack
@@ -22,13 +24,13 @@ typedef struct maze_stack
 }MazeStack;
 
 
-void init_MazeStack(MazeStack* stack, unsigned char stack_size)
+void init_MazeStack(MazeStack* stack, unsigned int stack_size)
 {
     stack->top = -1;
-    stack->array = (CellPair*)malloc(stack_size * sizeof(CellPair));
+    stack->array = (CellPair*)calloc(stack_size, sizeof(CellPair));
 }
 
-void maze_stack_push(MazeStack* stack, unsigned char x0, unsigned char y0)
+void maze_stack_push(MazeStack* stack, unsigned int x0, unsigned int y0)
 {
     stack->top++;
     (stack->array[stack->top]).x = x0;
@@ -43,16 +45,15 @@ void maze_stack_pop(MazeStack* stack)
 typedef struct maze_neighbours_stack
 {
     int top;
-    unsigned char *array;
+    unsigned int array[4];
 }NeighboursStack;
 
-void init_NeighboursStack(NeighboursStack* stack, unsigned char stack_size)
+void init_NeighboursStack(NeighboursStack* stack)
 {
     stack->top = -1;
-    stack->array = (unsigned char*)malloc(stack_size * sizeof(unsigned char));
 }
 
-void neighbours_stack_push(NeighboursStack* stack, unsigned char element)
+void neighbours_stack_push(NeighboursStack* stack, unsigned int element)
 {
     stack->top++;
     stack->array[stack->top] = element;
