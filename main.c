@@ -5,6 +5,7 @@
 #include "maze.h"
 
 // gcc -o main main.c -I/mingw64/include/SDL2 -L/mingw64/lib -lmingw32 -lSDL2main -lSDL2
+// gcc -o main main.c -lSDL2
 
 void drawPseudoPixel(SDL_Renderer *renderer, int x, int y, int r, int g, int b, int size)
 {
@@ -15,6 +16,7 @@ void drawPseudoPixel(SDL_Renderer *renderer, int x, int y, int r, int g, int b, 
     SDL_Rect squareRect = {x * size, y * size, size, size};
     SDL_RenderFillRect(renderer, &squareRect);
 }
+
 
 int main(int argc, char *argv[])
 {
@@ -32,8 +34,10 @@ int main(int argc, char *argv[])
     m_cells = (unsigned int *)calloc(MazeWidth * MazeHeight, sizeof(unsigned int));
     MazeStack m_stack;
     init_MazeStack(&m_stack, MazeWidth * MazeHeight);
-    maze_stack_push(&m_stack, 0, 0);
-    m_cells[0] = CELL_VISITED;
+    srand(time(NULL));
+    int x = rand()%MazeWidth, y = rand()%MazeHeight;
+    maze_stack_push(&m_stack, x, y);
+    m_cells[y*MazeWidth + x] = CELL_VISITED;
     NumVisitedCells = 1;
 
     // Create Maze
