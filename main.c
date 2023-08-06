@@ -17,7 +17,6 @@ void drawPseudoPixel(SDL_Renderer *renderer, int x, int y, int r, int g, int b, 
     SDL_RenderFillRect(renderer, &squareRect);
 }
 
-
 int main(int argc, char *argv[])
 {
     // Window
@@ -25,19 +24,19 @@ int main(int argc, char *argv[])
     SDL_DisplayMode displayMode;
     SDL_GetCurrentDisplayMode(0, &displayMode);
     int window_width = 1200, window_height = 600;
-    SDL_Window *window = SDL_CreateWindow("Maze Generator", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, window_width, window_height, SDL_WINDOW_SHOWN);
+    SDL_Window *window = SDL_CreateWindow("Maze Generator", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, window_width/2, window_height, SDL_WINDOW_SHOWN);
     SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
     // Maze parameters
-    unsigned int MazeWidth = 35, MazeHeight = 20, NumVisitedCells, PathWidth = 3;
+    unsigned int MazeWidth = 20, MazeHeight = 20, NumVisitedCells, PathWidth = 3;
     unsigned int *m_cells;
     m_cells = (unsigned int *)calloc(MazeWidth * MazeHeight, sizeof(unsigned int));
     MazeStack m_stack;
     init_MazeStack(&m_stack, MazeWidth * MazeHeight);
     srand(time(NULL));
-    int x = rand()%MazeWidth, y = rand()%MazeHeight;
+    int x = rand() % MazeWidth, y = rand() % MazeHeight;
     maze_stack_push(&m_stack, x, y);
-    m_cells[y*MazeWidth + x] = CELL_VISITED;
+    m_cells[y * MazeWidth + x] = CELL_VISITED;
     NumVisitedCells = 1;
 
     // Create Maze
@@ -66,7 +65,7 @@ int main(int argc, char *argv[])
             // Choose one available neighbour at random
             srand(time(NULL)); // Seed the random number generator with the current time
             int next_cell_dir = neighbours.array[rand() % (neighbours.top + 1)];
-            max_repeated_cell_dir = rand() % 10;
+            max_repeated_cell_dir = rand() % ((MazeWidth/3 < MazeHeight/3) ? MazeWidth/3 : MazeHeight/3);
 
             if (next_cell_dir == last_cell_dir)
             {
@@ -118,36 +117,118 @@ int main(int argc, char *argv[])
             // No available neighbours so backtrack
             maze_stack_pop(&m_stack);
         }
-        // Draw maze
-        for (size_t x = 0; x < MazeWidth; x++)
+    }
+    for (int x = 1; x < MazeWidth - 1; x++)
+    {
+        for (int y = 1; y < MazeHeight - 1; y++)
         {
-            for (size_t y = 0; y < MazeHeight; y++)
+            srand(time(NULL));
+            int do_it = rand() % 5;
+            if (do_it == 0)
             {
-                for (size_t px = 0; px < PathWidth; px++)
+                int dir = rand() % 4;
+                switch (dir)
                 {
-                    for (size_t py = 0; py < PathWidth; py++)
-                    {
-                        if (m_cells[y * MazeWidth + x] & CELL_VISITED)
-                            drawPseudoPixel(renderer, x * (PathWidth + 1) + px, y * (PathWidth + 1) + py, 0, 0, 255, 6);
-                        else
-                            drawPseudoPixel(renderer, x * (PathWidth + 1) + px, y * (PathWidth + 1) + py, 255, 0, 0, 6);
-                    }
+                case 0:
+                    m_cells[y * MazeWidth + x] |= CELL_PATH_N;
+                    m_cells[(y-1) * MazeWidth + x] |= CELL_PATH_S;
+                    break;
+                case 1:
+                    m_cells[y * MazeWidth + x] |= CELL_PATH_E;
+                    m_cells[y * MazeWidth + (x+1)] |= CELL_PATH_W;
+                    break;
+                case 2:
+                    m_cells[y * MazeWidth + x] |= CELL_PATH_S;
+                    m_cells[(y+1) * MazeWidth + x] |= CELL_PATH_N;
+                    break;
+                case 3:
+                    m_cells[y * MazeWidth + x] |= CELL_PATH_W;
+                    m_cells[y * MazeWidth + (x-1)] |= CELL_PATH_E;
+                    break;
+                default:
+                    break;
                 }
-
-                for (int p = 0; p < PathWidth; p++)
+                dir = rand() % 4;
+                switch (dir)
                 {
-                    if (m_cells[y * MazeWidth + x] & CELL_PATH_S)
-                        drawPseudoPixel(renderer, x * (PathWidth + 1) + p, y * (PathWidth + 1) + PathWidth, 0, 0, 255, 6); // Draw South Passage
-                    if (m_cells[y * MazeWidth + x] & CELL_PATH_E)
-                        drawPseudoPixel(renderer, x * (PathWidth + 1) + PathWidth, y * (PathWidth + 1) + p, 0, 0, 255, 6); // Draw East Passage
+                case 0:
+                    m_cells[y * MazeWidth + x] |= CELL_PATH_N;
+                    m_cells[(y-1) * MazeWidth + x] |= CELL_PATH_S;
+                    break;
+                case 1:
+                    m_cells[y * MazeWidth + x] |= CELL_PATH_E;
+                    m_cells[y * MazeWidth + (x+1)] |= CELL_PATH_W;
+                    break;
+                case 2:
+                    m_cells[y * MazeWidth + x] |= CELL_PATH_S;
+                    m_cells[(y+1) * MazeWidth + x] |= CELL_PATH_N;
+                    break;
+                case 3:
+                    m_cells[y * MazeWidth + x] |= CELL_PATH_W;
+                    m_cells[y * MazeWidth + (x-1)] |= CELL_PATH_E;
+                    break;
+                default:
+                    break;
                 }
             }
         }
-        SDL_RenderPresent(renderer);
     }
+    m_cells[0] |= CELL_PATH_E;
+    m_cells[m_cells[0 * MazeWidth + 1]] |= CELL_PATH_W;
+    m_cells[0] |= CELL_PATH_S;
+    m_cells[m_cells[1 * MazeWidth + 0]] |= CELL_PATH_N;
+
+    // Draw maze
+    for (int x = 0; x < MazeWidth; x++)
+    {
+        for (int y = 0; y < MazeHeight; y++)
+        {
+            for (int px = 0; px < PathWidth; px++)
+            {
+                for (int py = 0; py < PathWidth; py++)
+                {
+                    if (m_cells[y * MazeWidth + x] & CELL_VISITED)
+                        drawPseudoPixel(renderer, x * (PathWidth + 1) + px, y * (PathWidth + 1) + py, 255, 255, 255, 6);
+                    else
+                        drawPseudoPixel(renderer, x * (PathWidth + 1) + px, y * (PathWidth + 1) + py, 255, 255, 255, 6);
+                }
+            }
+
+            for (int p = 0; p < PathWidth; p++)
+            {
+                if (m_cells[y * MazeWidth + x] & CELL_PATH_S)
+                    drawPseudoPixel(renderer, x * (PathWidth + 1) + p, y * (PathWidth + 1) + PathWidth, 255, 255, 255, 6); // Draw South Passage
+                if (m_cells[y * MazeWidth + x] & CELL_PATH_E)
+                    drawPseudoPixel(renderer, x * (PathWidth + 1) + PathWidth, y * (PathWidth + 1) + p, 255, 255, 255, 6); // Draw East Passage
+            }
+        }
+    }
+    for (int px = 0; px < PathWidth; px++)
+    {
+        for (int py = 0; py < PathWidth; py++)
+        {
+            drawPseudoPixel(renderer, 0 * (PathWidth + 1) + px, 0 * (PathWidth + 1) + py, 255, 0, 0, 6);
+        }
+    }
+    for (int px = 0; px < PathWidth; px++)
+    {
+        for (int py = 0; py < PathWidth; py++)
+        {
+            drawPseudoPixel(renderer, (MazeWidth - 1) * (PathWidth + 1) + px, (MazeHeight - 1) * (PathWidth + 1) + py, 0, 255, 0, 6);
+        }
+    }
+    for (int px = 0; px < PathWidth; px++)
+    {
+        for (int py = 0; py < PathWidth; py++)
+        {
+            drawPseudoPixel(renderer, (MazeWidth)/2 * (PathWidth + 1) + px, (MazeHeight)/2 * (PathWidth + 1) + py, 255, 255, 0, 6);
+        }
+    }
+    SDL_RenderPresent(renderer);
 
     int running = 1;
     SDL_Event event;
+    int x_position = 0, y_position = 0;
     while (running)
     {
         while (SDL_PollEvent(&event))
@@ -163,15 +244,91 @@ int main(int argc, char *argv[])
                 {
                 case SDLK_UP:
                     printf("Up arrow key was pressed.\n");
+                    if (!(y_position == 0) && (m_cells[y_position * MazeWidth + x_position] & CELL_PATH_N))
+                    {
+                        for (int px = 0; px < PathWidth; px++)
+                        {
+                            for (int py = 0; py < PathWidth; py++)
+                            {
+                                drawPseudoPixel(renderer, x_position * (PathWidth + 1) + px, y_position * (PathWidth + 1) + py, 255, 255, 255, 6);
+                            }
+                        }
+                        y_position--;
+                        for (int px = 0; px < PathWidth; px++)
+                        {
+                            for (int py = 0; py < PathWidth; py++)
+                            {
+                                drawPseudoPixel(renderer, x_position * (PathWidth + 1) + px, y_position * (PathWidth + 1) + py, 255, 0, 0, 6);
+                            }
+                        }
+                        SDL_RenderPresent(renderer);
+                    }
                     break;
                 case SDLK_DOWN:
                     printf("Down arrow key was pressed.\n");
+                    if (!(y_position == MazeHeight - 1) && (m_cells[y_position * MazeWidth + x_position] & CELL_PATH_S))
+                    {
+                        for (int px = 0; px < PathWidth; px++)
+                        {
+                            for (int py = 0; py < PathWidth; py++)
+                            {
+                                drawPseudoPixel(renderer, x_position * (PathWidth + 1) + px, y_position * (PathWidth + 1) + py, 255, 255, 255, 6);
+                            }
+                        }
+                        y_position++;
+                        for (int px = 0; px < PathWidth; px++)
+                        {
+                            for (int py = 0; py < PathWidth; py++)
+                            {
+                                drawPseudoPixel(renderer, x_position * (PathWidth + 1) + px, y_position * (PathWidth + 1) + py, 255, 0, 0, 6);
+                            }
+                        }
+                        SDL_RenderPresent(renderer);
+                    }
                     break;
                 case SDLK_LEFT:
                     printf("Left arrow key was pressed.\n");
+                    if (!(x_position == 0) && (m_cells[y_position * MazeWidth + x_position] & CELL_PATH_W))
+                    {
+                        for (int px = 0; px < PathWidth; px++)
+                        {
+                            for (int py = 0; py < PathWidth; py++)
+                            {
+                                drawPseudoPixel(renderer, x_position * (PathWidth + 1) + px, y_position * (PathWidth + 1) + py, 255, 255, 255, 6);
+                            }
+                        }
+                        x_position--;
+                        for (int px = 0; px < PathWidth; px++)
+                        {
+                            for (int py = 0; py < PathWidth; py++)
+                            {
+                                drawPseudoPixel(renderer, x_position * (PathWidth + 1) + px, y_position * (PathWidth + 1) + py, 255, 0, 0, 6);
+                            }
+                        }
+                        SDL_RenderPresent(renderer);
+                    }
                     break;
                 case SDLK_RIGHT:
                     printf("Right arrow key was pressed.\n");
+                    if (!(x_position == MazeWidth - 1) && (m_cells[y_position * MazeWidth + x_position] & CELL_PATH_E))
+                    {
+                        for (int px = 0; px < PathWidth; px++)
+                        {
+                            for (int py = 0; py < PathWidth; py++)
+                            {
+                                drawPseudoPixel(renderer, x_position * (PathWidth + 1) + px, y_position * (PathWidth + 1) + py, 255, 255, 255, 6);
+                            }
+                        }
+                        x_position++;
+                        for (int px = 0; px < PathWidth; px++)
+                        {
+                            for (int py = 0; py < PathWidth; py++)
+                            {
+                                drawPseudoPixel(renderer, x_position * (PathWidth + 1) + px, y_position * (PathWidth + 1) + py, 255, 0, 0, 6);
+                            }
+                        }
+                        SDL_RenderPresent(renderer);
+                    }
                     break;
                 case SDLK_SPACE:
                     printf("Space key was pressed.\n");
@@ -180,7 +337,7 @@ int main(int argc, char *argv[])
                     break;
                 }
             }
-            else if (event.type == SDL_KEYUP)
+            /* else if (event.type == SDL_KEYUP)
             {
                 // Check the specific key that was released
                 switch (event.key.keysym.sym)
@@ -203,7 +360,7 @@ int main(int argc, char *argv[])
                 default:
                     break;
                 }
-            }
+            } */
         }
     }
 
