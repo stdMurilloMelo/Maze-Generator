@@ -11,12 +11,13 @@ enum
     CELL_PATH_S = 0b100,
     CELL_PATH_W = 0b1000,
     CELL_VISITED = 0b10000,
+    CURRENT_CELL = 0b100000,
 };
 
 typedef struct cell_pair
 {
-    unsigned int x;
-    unsigned int y;
+    int x;
+    int y;
 } CellPair;
 
 typedef struct maze_stack
@@ -25,13 +26,13 @@ typedef struct maze_stack
     CellPair *array;
 } MazeStack;
 
-void init_MazeStack(MazeStack *stack, unsigned int stack_size)
+void init_MazeStack(MazeStack *stack, int stack_size)
 {
     stack->top = -1;
     stack->array = (CellPair *)calloc(stack_size, sizeof(CellPair));
 }
 
-void maze_stack_push(MazeStack *stack, unsigned int x0, unsigned int y0)
+void maze_stack_push(MazeStack *stack, int x0, int y0)
 {
     stack->top++;
     (stack->array[stack->top]).x = x0;
@@ -46,7 +47,7 @@ void maze_stack_pop(MazeStack *stack)
 typedef struct maze_neighbours_stack
 {
     int top;
-    unsigned int array[4];
+    int array[4];
 } NeighboursStack;
 
 void init_NeighboursStack(NeighboursStack *stack)
@@ -54,7 +55,7 @@ void init_NeighboursStack(NeighboursStack *stack)
     stack->top = -1;
 }
 
-void neighbours_stack_push(NeighboursStack *stack, unsigned int element)
+void neighbours_stack_push(NeighboursStack *stack, int element)
 {
     stack->top++;
     stack->array[stack->top] = element;
@@ -65,15 +66,15 @@ void neighbours_stack_pop(NeighboursStack *stack)
     stack->top--;
 }
 
-void create_maze(unsigned int *cells, unsigned int Width, unsigned int Height)
+void create_maze(int *cells, int Width, int Height)
 {
-    unsigned int NumVisitedCells;
+    int NumVisitedCells;
     MazeStack m_stack;
     init_MazeStack(&m_stack, Width * Height);
-    
+
     srand(time(NULL));
     int x = rand() % Width, y = rand() % Height;
-    
+
     maze_stack_push(&m_stack, x, y);
     cells[y * Width + x] = CELL_VISITED;
     NumVisitedCells = 1;
@@ -156,11 +157,37 @@ void create_maze(unsigned int *cells, unsigned int Width, unsigned int Height)
             maze_stack_pop(&m_stack);
         }
     }
-    for (int x = 0; x < Width; x++)
-    {
-        for (int y = 0; y < Height; y++)
-        {
 
+    for (int x = 1; x < Width - 1; x++)
+    {
+        for (int y = 1; y < Height - 1; y++)
+        {
+            int add_path = rand() % 100;
+            if (add_path == 0)
+            {
+                int dir = rand() % 4;
+                switch (dir)
+                {
+                case 0:
+                    cells[y * Width + x] |= CELL_PATH_N;
+                    cells[(y - 1) * Width + x] |= CELL_PATH_S;
+                    break;
+                case 1:
+                    cells[y * Width + x] |= CELL_PATH_S;
+                    cells[(y + 1) * Width + x] |= CELL_PATH_N;
+                    break;
+                case 2:
+                    cells[y * Width + x] |= CELL_PATH_E;
+                    cells[y * Width + (x + 1)] |= CELL_PATH_W;
+                    break;
+                case 3:
+                    cells[y * Width + x] |= CELL_PATH_W;
+                    cells[y * Width + (x - 1)] |= CELL_PATH_E;
+                    break;
+                default:
+                    break;
+                }
+            }
         }
     }
 }
@@ -175,7 +202,7 @@ void drawPseudoPixel(SDL_Renderer *renderer, int x, int y, int r, int g, int b, 
     SDL_RenderFillRect(renderer, &squareRect);
 }
 
-void draw_maze(SDL_Renderer *renderer, unsigned int *cells, unsigned int Width, unsigned int Height, unsigned int PathWidth)
+void draw_maze(SDL_Renderer *renderer, int *cells, int Width, int Height, int PathWidth, int PixelSize)
 {
     for (int x = 0; x < Width; x++)
     {
@@ -186,18 +213,20 @@ void draw_maze(SDL_Renderer *renderer, unsigned int *cells, unsigned int Width, 
                 for (int py = 0; py < PathWidth; py++)
                 {
                     if (cells[y * Width + x] & CELL_VISITED)
-                        drawPseudoPixel(renderer, x * (PathWidth + 1) + px, y * (PathWidth + 1) + py, 255, 255, 255, 6);
+                        drawPseudoPixel(renderer, x * (PathWidth + 1) + px, y * (PathWidth + 1) + py, 255, 255, 255, PixelSize);
                     else
-                        drawPseudoPixel(renderer, x * (PathWidth + 1) + px, y * (PathWidth + 1) + py, 255, 255, 255, 6);
+                        drawPseudoPixel(renderer, x * (PathWidth + 1) + px, y * (PathWidth + 1) + py, 0, 0, 255, PixelSize);
+                    if (cells[y * Width + x] & CURRENT_CELL)
+                        drawPseudoPixel(renderer, x * (PathWidth + 1) + px, y * (PathWidth + 1) + py, 255, 0, 0, PixelSize);
                 }
             }
 
             for (int p = 0; p < PathWidth; p++)
             {
                 if (cells[y * Width + x] & CELL_PATH_S)
-                    drawPseudoPixel(renderer, x * (PathWidth + 1) + p, y * (PathWidth + 1) + PathWidth, 255, 255, 255, 6); // Draw South Passage
+                    drawPseudoPixel(renderer, x * (PathWidth + 1) + p, y * (PathWidth + 1) + PathWidth, 255, 255, 255, PixelSize); // Draw South Passage
                 if (cells[y * Width + x] & CELL_PATH_E)
-                    drawPseudoPixel(renderer, x * (PathWidth + 1) + PathWidth, y * (PathWidth + 1) + p, 255, 255, 255, 6); // Draw East Passage
+                    drawPseudoPixel(renderer, x * (PathWidth + 1) + PathWidth, y * (PathWidth + 1) + p, 255, 255, 255, PixelSize); // Draw East Passage
             }
         }
     }
@@ -205,14 +234,7 @@ void draw_maze(SDL_Renderer *renderer, unsigned int *cells, unsigned int Width, 
     {
         for (int py = 0; py < PathWidth; py++)
         {
-            drawPseudoPixel(renderer, 0 * (PathWidth + 1) + px, 0 * (PathWidth + 1) + py, 255, 0, 0, 6);
-        }
-    }
-    for (int px = 0; px < PathWidth; px++)
-    {
-        for (int py = 0; py < PathWidth; py++)
-        {
-            drawPseudoPixel(renderer, (Width - 1) * (PathWidth + 1) + px, (Height - 1) * (PathWidth + 1) + py, 0, 255, 0, 6);
+            drawPseudoPixel(renderer, (Width - 1) * (PathWidth + 1) + px, (Height - 1) * (PathWidth + 1) + py, 0, 255, 0, PixelSize);
         }
     }
     SDL_RenderPresent(renderer);

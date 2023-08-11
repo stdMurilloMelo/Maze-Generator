@@ -3,32 +3,35 @@
 #include <time.h>
 #include <stdlib.h>
 #include "maze.h"
-
-// gcc -o main main.c -I/mingw64/include/SDL2 -L/mingw64/lib -lmingw32 -lSDL2main -lSDL2
-// gcc -o main main.c -lSDL2
-
-
+#include <unistd.h>
 
 int main(int argc, char *argv[])
 {
-    // Window
+    // Window parameters
     SDL_Init(SDL_INIT_VIDEO);
     SDL_DisplayMode displayMode;
     SDL_GetCurrentDisplayMode(0, &displayMode);
-    int window_width = 1200, window_height = 600;
-    SDL_Window *window = SDL_CreateWindow("Maze Generator", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, window_width/2, window_height, SDL_WINDOW_SHOWN);
-    SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+
+    int window_height = 0.8 * displayMode.h, window_width = window_height;
 
     // Maze parameters
-    unsigned int *m_cells, MazeWidth = 20, MazeHeight = 20, PathWidth = 3;
-    m_cells = (unsigned int *)calloc(MazeWidth * MazeHeight, sizeof(unsigned int));
-    
+    int *m_cells;
+    int MazeWidth, MazeHeight, PathWidth = 3;
+    scanf("%d", &MazeHeight);
+    MazeWidth = MazeHeight;
+    int PixelSize = window_width / (4 * MazeHeight);
+    m_cells = (int *)calloc(MazeWidth * MazeHeight, sizeof(int));
+
+    // Create window
+    SDL_Window *window = SDL_CreateWindow("Maze Generator", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, window_width, window_height, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+    SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+
     // Create maze
     create_maze(m_cells, MazeWidth, MazeHeight);
 
     // Draw maze
-    draw_maze(renderer, m_cells, MazeWidth, MazeHeight, PathWidth);
-    
+    m_cells[0] |= CURRENT_CELL;
+    draw_maze(renderer, m_cells, MazeWidth, MazeHeight, PathWidth, PixelSize);
     int running = 1;
     SDL_Event event;
     int x_position = 0, y_position = 0;
@@ -48,85 +51,37 @@ int main(int argc, char *argv[])
                 case SDLK_UP:
                     if (!(y_position == 0) && (m_cells[y_position * MazeWidth + x_position] & CELL_PATH_N))
                     {
-                        for (int px = 0; px < PathWidth; px++)
-                        {
-                            for (int py = 0; py < PathWidth; py++)
-                            {
-                                drawPseudoPixel(renderer, x_position * (PathWidth + 1) + px, y_position * (PathWidth + 1) + py, 255, 255, 255, 6);
-                            }
-                        }
+                        m_cells[y_position * MazeWidth + x_position] &= ~CURRENT_CELL;
                         y_position--;
-                        for (int px = 0; px < PathWidth; px++)
-                        {
-                            for (int py = 0; py < PathWidth; py++)
-                            {
-                                drawPseudoPixel(renderer, x_position * (PathWidth + 1) + px, y_position * (PathWidth + 1) + py, 255, 0, 0, 6);
-                            }
-                        }
-                        SDL_RenderPresent(renderer);
+                        m_cells[y_position * MazeWidth + x_position] |= CURRENT_CELL;
+                        draw_maze(renderer, m_cells, MazeWidth, MazeHeight, PathWidth, PixelSize);
                     }
                     break;
                 case SDLK_DOWN:
                     if (!(y_position == MazeHeight - 1) && (m_cells[y_position * MazeWidth + x_position] & CELL_PATH_S))
                     {
-                        for (int px = 0; px < PathWidth; px++)
-                        {
-                            for (int py = 0; py < PathWidth; py++)
-                            {
-                                drawPseudoPixel(renderer, x_position * (PathWidth + 1) + px, y_position * (PathWidth + 1) + py, 255, 255, 255, 6);
-                            }
-                        }
+                        m_cells[y_position * MazeWidth + x_position] &= ~CURRENT_CELL;
                         y_position++;
-                        for (int px = 0; px < PathWidth; px++)
-                        {
-                            for (int py = 0; py < PathWidth; py++)
-                            {
-                                drawPseudoPixel(renderer, x_position * (PathWidth + 1) + px, y_position * (PathWidth + 1) + py, 255, 0, 0, 6);
-                            }
-                        }
-                        SDL_RenderPresent(renderer);
+                        m_cells[y_position * MazeWidth + x_position] |= CURRENT_CELL;
+                        draw_maze(renderer, m_cells, MazeWidth, MazeHeight, PathWidth, PixelSize);
                     }
                     break;
                 case SDLK_LEFT:
                     if (!(x_position == 0) && (m_cells[y_position * MazeWidth + x_position] & CELL_PATH_W))
                     {
-                        for (int px = 0; px < PathWidth; px++)
-                        {
-                            for (int py = 0; py < PathWidth; py++)
-                            {
-                                drawPseudoPixel(renderer, x_position * (PathWidth + 1) + px, y_position * (PathWidth + 1) + py, 255, 255, 255, 6);
-                            }
-                        }
+                        m_cells[y_position * MazeWidth + x_position] &= ~CURRENT_CELL;
                         x_position--;
-                        for (int px = 0; px < PathWidth; px++)
-                        {
-                            for (int py = 0; py < PathWidth; py++)
-                            {
-                                drawPseudoPixel(renderer, x_position * (PathWidth + 1) + px, y_position * (PathWidth + 1) + py, 255, 0, 0, 6);
-                            }
-                        }
-                        SDL_RenderPresent(renderer);
+                        m_cells[y_position * MazeWidth + x_position] |= CURRENT_CELL;
+                        draw_maze(renderer, m_cells, MazeWidth, MazeHeight, PathWidth, PixelSize);
                     }
                     break;
                 case SDLK_RIGHT:
                     if (!(x_position == MazeWidth - 1) && (m_cells[y_position * MazeWidth + x_position] & CELL_PATH_E))
                     {
-                        for (int px = 0; px < PathWidth; px++)
-                        {
-                            for (int py = 0; py < PathWidth; py++)
-                            {
-                                drawPseudoPixel(renderer, x_position * (PathWidth + 1) + px, y_position * (PathWidth + 1) + py, 255, 255, 255, 6);
-                            }
-                        }
+                        m_cells[y_position * MazeWidth + x_position] &= ~CURRENT_CELL;
                         x_position++;
-                        for (int px = 0; px < PathWidth; px++)
-                        {
-                            for (int py = 0; py < PathWidth; py++)
-                            {
-                                drawPseudoPixel(renderer, x_position * (PathWidth + 1) + px, y_position * (PathWidth + 1) + py, 255, 0, 0, 6);
-                            }
-                        }
-                        SDL_RenderPresent(renderer);
+                        m_cells[y_position * MazeWidth + x_position] |= CURRENT_CELL;
+                        draw_maze(renderer, m_cells, MazeWidth, MazeHeight, PathWidth, PixelSize);
                     }
                     break;
                 case SDLK_SPACE:
@@ -136,6 +91,8 @@ int main(int argc, char *argv[])
                 }
             }
         }
+        if ((x_position == MazeWidth - 1) && (y_position == MazeHeight - 1))
+            break;
     }
 
     SDL_DestroyRenderer(renderer);
