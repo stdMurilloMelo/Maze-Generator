@@ -21,6 +21,7 @@ int main(int argc, char *argv[])
     MazeWidth = MazeHeight;
     int PixelSize = window_width / (4 * MazeHeight);
     m_cells = (int *)calloc(MazeWidth * MazeHeight, sizeof(int));
+    m_cells[0] |= CURRENT_CELL;
 
     // Create window
     SDL_Window *window = SDL_CreateWindow("Maze Generator", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, window_width, window_height, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
@@ -30,8 +31,8 @@ int main(int argc, char *argv[])
     create_maze(m_cells, MazeWidth, MazeHeight);
 
     // Draw maze
-    m_cells[0] |= CURRENT_CELL;
     draw_maze(renderer, m_cells, MazeWidth, MazeHeight, PathWidth, PixelSize);
+
     int running = 1;
     SDL_Event event;
     int x_position = 0, y_position = 0;
