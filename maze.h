@@ -190,6 +190,7 @@ void create_maze(int *cells, int Width, int Height)
             }
         }
     }
+    free(m_stack.array);
 }
 
 void drawPseudoPixel(SDL_Renderer *renderer, int x, int y, int r, int g, int b, int size)

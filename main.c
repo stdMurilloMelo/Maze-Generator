@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
     int MazeWidth, MazeHeight, PathWidth = 3;
     scanf("%d", &MazeHeight);
     MazeWidth = MazeHeight;
-    int PixelSize = window_width / (4 * MazeHeight);
+    int PixelSize = (window_height) / (4.0 * MazeHeight);
     m_cells = (int *)calloc(MazeWidth * MazeHeight, sizeof(int));
     m_cells[0] |= CURRENT_CELL;
 
@@ -89,6 +89,18 @@ int main(int argc, char *argv[])
                     break;
                 default:
                     break;
+                }
+            }
+            else if (event.type == SDL_WINDOWEVENT)
+            {
+                if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
+                {
+                    window_width = event.window.data1;
+                    window_height = event.window.data2;
+                    PixelSize = (window_height) / (4.0 * MazeHeight); // fix it later
+                    SDL_DestroyRenderer(renderer);
+                    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+                    draw_maze(renderer, m_cells, MazeWidth, MazeHeight, PathWidth, PixelSize);
                 }
             }
         }
