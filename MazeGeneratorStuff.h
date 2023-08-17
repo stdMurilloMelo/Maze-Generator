@@ -300,6 +300,7 @@ int saveMazeData(const char *filename, int *cells, int Width, int Height)
     if (file == NULL)
         return 0;
     
+    fwrite(Width, sizeof(unsigned char), 1, file);
     for (int x = 0; x < Width; x++)
     {
         for (int y = 0; y < Height; y++)
