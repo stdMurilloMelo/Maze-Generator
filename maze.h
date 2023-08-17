@@ -104,7 +104,7 @@ void create_maze(int *cells, int Width, int Height)
         {
             // Choose one available neighbour at random
             int next_cell_dir = neighbours.array[rand() % (neighbours.top + 1)];
-            max_repeated_cell_dir = rand() % ((Width / 3 < Height / 3) ? Width / 3 : Height / 3);
+            max_repeated_cell_dir = rand() % ((Width / 3 < Height / 3) ? Width / 3 : Height / 3) + 1;
 
             if (next_cell_dir == last_cell_dir)
             {
@@ -158,12 +158,13 @@ void create_maze(int *cells, int Width, int Height)
         }
     }
 
+    // Add more paths
     for (int x = 1; x < Width - 1; x++)
     {
         for (int y = 1; y < Height - 1; y++)
         {
-            int add_path = rand() % 50;
-            if (add_path == 0)
+            int add_path = rand() % 1000;
+            if (add_path == 1)
             {
                 int dir = rand() % 4;
                 switch (dir)
@@ -244,14 +245,14 @@ void draw_maze(SDL_Renderer *renderer, int *cells, int Width, int Height, int Pa
 
 #define drawPixelSVG(x, y, size) fprintf(file, "<rect x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" fill=\"white\" />\n", x, y, size, size)
 
-void saveMazeAsSVG(const char *filename, int *cells, int Width, int Height, int PathWidth)
+int saveMazeAsSVG(const char *filename, int *cells, int Width, int Height, int PathWidth)
 {
-    int sz = 500 / (4 * Height);
+    int sz = 500 / (4 * Height), check;
     FILE *file = fopen(filename, "w");
     if (file == NULL)
     {
         printf("Error opening file for writing.");
-        return;
+        return 0;
     }
 
     fprintf(file, "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n");
@@ -269,20 +270,44 @@ void saveMazeAsSVG(const char *filename, int *cells, int Width, int Height, int 
             {
                 for (int py = 0; py < PathWidth; py++)
                 {
-                    drawPixelSVG((x * (PathWidth + 1) + px) * sz, (y * (PathWidth + 1) + py) * sz, sz);
+                    check = drawPixelSVG((x * (PathWidth + 1) + px) * sz, (y * (PathWidth + 1) + py) * sz, sz);
+                    if (check < 0)
+                        return 0;
                 }
             }
 
             for (int p = 0; p < PathWidth; p++)
             {
                 if (cells[y * Width + x] & CELL_PATH_S)
-                    drawPixelSVG((x * (PathWidth + 1) + p) * sz, (y * (PathWidth + 1) + PathWidth) * sz, sz); // Draw South Passage
+                    check = drawPixelSVG((x * (PathWidth + 1) + p) * sz, (y * (PathWidth + 1) + PathWidth) * sz, sz); // Draw South Passage
                 if (cells[y * Width + x] & CELL_PATH_E)
-                    drawPixelSVG((x * (PathWidth + 1) + PathWidth) * sz, (y * (PathWidth + 1) + p) * sz, sz); // Draw East Passage
+                    check = drawPixelSVG((x * (PathWidth + 1) + PathWidth) * sz, (y * (PathWidth + 1) + p) * sz, sz); // Draw East Passage
+                if (check < 0)
+                    return 0;
             }
         }
     }
     fprintf(file, "</svg>\n");
 
     fclose(file);
+    return 1;
+}
+
+int saveMazeData(const char *filename, int *cells, int Width, int Height)
+{
+    FILE *file = fopen(filename, "wb");
+
+    if (file == NULL)
+        return 0;
+    
+    for (int x = 0; x < Width; x++)
+    {
+        for (int y = 0; y < Height; y++)
+        {
+            unsigned char firstByte = (unsigned char)(cells[y * Width + x] & 0b11111111); // Extract the first byte
+            fwrite(&firstByte, sizeof(unsigned char), 1, file);                           // Write the byte to the file
+        }
+    }
+    fclose(file); // Close the file
+    return 1;
 }

@@ -12,9 +12,9 @@ SDL_Window *window = NULL;
 SDL_Renderer *renderer = NULL;
 SDL_Texture *textTexture = NULL;
 
-void renderText(SDL_Renderer *renderer, TTF_Font *font, const char *text, SDL_Color color)
+void renderText(SDL_Renderer *renderer, TTF_Font *menufont, const char *text, SDL_Color color)
 {
-    SDL_Surface *textSurface = TTF_RenderText_Solid(font, text, color);
+    SDL_Surface *textSurface = TTF_RenderText_Solid(menufont, text, color);
     textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
     SDL_FreeSurface(textSurface);
 }
@@ -50,8 +50,15 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    TTF_Font *font = TTF_OpenFont("/usr/share/fonts/truetype/teluguvijayam/NATS.ttf", 36);
-    if (!font)
+    TTF_Font *menufont = TTF_OpenFont("/usr/share/fonts/truetype/teluguvijayam/NATS.ttf", WINDOW_WIDTH / 10);
+    if (!menufont)
+    {
+        printf("Font loading failed\n");
+        return -1;
+    }
+
+    TTF_Font *mazefont = TTF_OpenFont("/usr/share/fonts/truetype/teluguvijayam/NATS.ttf", WINDOW_WIDTH / 25);
+    if (!mazefont)
     {
         printf("Font loading failed\n");
         return -1;
@@ -99,7 +106,7 @@ int main(int argc, char *argv[])
 
             char displayText[50];
             sprintf(displayText, "Type maze size: %s", inputText);
-            renderText(renderer, font, displayText, textColor);
+            renderText(renderer, menufont, displayText, textColor);
 
             SDL_Rect textRect = {0, 0, 0, 0};
             SDL_QueryTexture(textTexture, NULL, NULL, &textRect.w, &textRect.h);
@@ -107,6 +114,22 @@ int main(int argc, char *argv[])
             textRect.y = (WINDOW_HEIGHT - textRect.h) / 2;
 
             SDL_RenderCopy(renderer, textTexture, NULL, &textRect);
+
+            char minText[] = "(min=3)";
+            SDL_Surface *minSurface = TTF_RenderText_Solid(menufont, minText, textColor);
+            SDL_Texture *minTexture = SDL_CreateTextureFromSurface(renderer, minSurface);
+
+            SDL_Rect minRect = {0, 0, 0, 0};
+            SDL_QueryTexture(minTexture, NULL, NULL, &minRect.w, &minRect.h);
+            minRect.x = (WINDOW_WIDTH - minRect.w) / 2;
+            minRect.y = textRect.y + textRect.h;
+
+            SDL_RenderCopy(renderer, minTexture, NULL, &minRect);
+
+            SDL_FreeSurface(minSurface);
+            SDL_DestroyTexture(minTexture);
+            SDL_DestroyTexture(textTexture);
+
             SDL_RenderPresent(renderer);
         }
 
@@ -126,6 +149,42 @@ int main(int argc, char *argv[])
             renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
             draw_maze(renderer, m_cells, MazeWidth, MazeHeight, PathWidth, PixelSize);
+
+            SDL_Color maze_textColor = {255, 255, 255, 255};
+            char moveText[] = "Arrows or WASD: move";
+            SDL_Surface *moveSurface = TTF_RenderText_Solid(mazefont, moveText, maze_textColor);
+            SDL_Texture *moveTexture = SDL_CreateTextureFromSurface(renderer, moveSurface);
+
+            SDL_Rect moveRect = {0, 0, 0, 0};
+            SDL_QueryTexture(moveTexture, NULL, NULL, &moveRect.w, &moveRect.h);
+            moveRect.x = (WINDOW_WIDTH / 2 - moveRect.w) / 2 + WINDOW_WIDTH / 2;
+            moveRect.y = (WINDOW_HEIGHT - moveRect.h) / 4;
+
+            SDL_RenderCopy(renderer, moveTexture, NULL, &moveRect);
+
+            char quitText[] = "Esc: return to menu";
+            SDL_Surface *quitSurface = TTF_RenderText_Solid(mazefont, quitText, maze_textColor);
+            SDL_Texture *quitTexture = SDL_CreateTextureFromSurface(renderer, quitSurface);
+
+            SDL_Rect quitRect = {0, 0, 0, 0};
+            SDL_QueryTexture(quitTexture, NULL, NULL, &quitRect.w, &quitRect.h);
+            quitRect.x = (WINDOW_WIDTH / 2 - quitRect.w) / 2 + WINDOW_WIDTH / 2;
+            quitRect.y = moveRect.y + moveRect.h;
+
+            SDL_RenderCopy(renderer, quitTexture, NULL, &quitRect);
+
+            char saveText[] = "Space: save maze";
+            SDL_Surface *saveSurface = TTF_RenderText_Solid(mazefont, saveText, maze_textColor);
+            SDL_Texture *saveTexture = SDL_CreateTextureFromSurface(renderer, saveSurface);
+
+            SDL_Rect saveRect = {0, 0, 0, 0};
+            SDL_QueryTexture(saveTexture, NULL, NULL, &saveRect.w, &saveRect.h);
+            saveRect.x = (WINDOW_WIDTH / 2 - saveRect.w) / 2 + WINDOW_WIDTH / 2;
+            saveRect.y = quitRect.y + quitRect.h;
+
+            SDL_RenderCopy(renderer, saveTexture, NULL, &saveRect);
+
+            SDL_RenderPresent(renderer);
 
             bool play_maze = true;
             SDL_Event play_event;
@@ -153,7 +212,25 @@ int main(int argc, char *argv[])
                                 draw_maze(renderer, m_cells, MazeWidth, MazeHeight, PathWidth, PixelSize);
                             }
                             break;
+                        case SDLK_w:
+                            if (!(y_position == 0) && (m_cells[y_position * MazeWidth + x_position] & CELL_PATH_N))
+                            {
+                                m_cells[y_position * MazeWidth + x_position] &= ~CURRENT_CELL;
+                                y_position--;
+                                m_cells[y_position * MazeWidth + x_position] |= CURRENT_CELL;
+                                draw_maze(renderer, m_cells, MazeWidth, MazeHeight, PathWidth, PixelSize);
+                            }
+                            break;
                         case SDLK_DOWN:
+                            if (!(y_position == MazeHeight - 1) && (m_cells[y_position * MazeWidth + x_position] & CELL_PATH_S))
+                            {
+                                m_cells[y_position * MazeWidth + x_position] &= ~CURRENT_CELL;
+                                y_position++;
+                                m_cells[y_position * MazeWidth + x_position] |= CURRENT_CELL;
+                                draw_maze(renderer, m_cells, MazeWidth, MazeHeight, PathWidth, PixelSize);
+                            }
+                            break;
+                        case SDLK_s:
                             if (!(y_position == MazeHeight - 1) && (m_cells[y_position * MazeWidth + x_position] & CELL_PATH_S))
                             {
                                 m_cells[y_position * MazeWidth + x_position] &= ~CURRENT_CELL;
@@ -171,6 +248,15 @@ int main(int argc, char *argv[])
                                 draw_maze(renderer, m_cells, MazeWidth, MazeHeight, PathWidth, PixelSize);
                             }
                             break;
+                        case SDLK_a:
+                            if (!(x_position == 0) && (m_cells[y_position * MazeWidth + x_position] & CELL_PATH_W))
+                            {
+                                m_cells[y_position * MazeWidth + x_position] &= ~CURRENT_CELL;
+                                x_position--;
+                                m_cells[y_position * MazeWidth + x_position] |= CURRENT_CELL;
+                                draw_maze(renderer, m_cells, MazeWidth, MazeHeight, PathWidth, PixelSize);
+                            }
+                            break;
                         case SDLK_RIGHT:
                             if (!(x_position == MazeWidth - 1) && (m_cells[y_position * MazeWidth + x_position] & CELL_PATH_E))
                             {
@@ -180,13 +266,49 @@ int main(int argc, char *argv[])
                                 draw_maze(renderer, m_cells, MazeWidth, MazeHeight, PathWidth, PixelSize);
                             }
                             break;
-                        case SDLK_SPACE:
+                        case SDLK_d:
+                            if (!(x_position == MazeWidth - 1) && (m_cells[y_position * MazeWidth + x_position] & CELL_PATH_E))
+                            {
+                                m_cells[y_position * MazeWidth + x_position] &= ~CURRENT_CELL;
+                                x_position++;
+                                m_cells[y_position * MazeWidth + x_position] |= CURRENT_CELL;
+                                draw_maze(renderer, m_cells, MazeWidth, MazeHeight, PathWidth, PixelSize);
+                            }
+                            break;
+                        case SDLK_ESCAPE:
                             play_maze = false;
                             maze = false;
                             free(m_cells);
                             break;
-                        case SDLK_g:
-                            saveMazeAsSVG("test.svg", m_cells, MazeWidth, MazeHeight, PathWidth);
+                        case SDLK_SPACE:
+                            int check1 = saveMazeAsSVG("MazeImage.svg", m_cells, MazeWidth, MazeHeight, PathWidth);
+                            int check2 = saveMazeData("MazeData.dat", m_cells, MazeWidth, MazeHeight);
+
+                            char *save_msgText;
+                            SDL_Color save_msgColor = {0, 0, 0, 255};
+
+                            if (check1 == 0 || check2 == 0)
+                            {
+                                save_msgText = "ERROR: Maze not Saved!";
+                                save_msgColor.r = 255;
+                            }
+                            else
+                            {
+                                save_msgText = "Maze Saved!";
+                                save_msgColor.g = 255;
+                            }
+
+                            SDL_Surface *save_msgSurface = TTF_RenderText_Solid(mazefont, save_msgText, save_msgColor);
+                            SDL_Texture *save_msgTexture = SDL_CreateTextureFromSurface(renderer, save_msgSurface);
+
+                            SDL_Rect save_msgRect = {0, 0, 0, 0};
+                            SDL_QueryTexture(save_msgTexture, NULL, NULL, &save_msgRect.w, &save_msgRect.h);
+                            save_msgRect.x = (WINDOW_WIDTH / 2 - save_msgRect.w) / 2 + WINDOW_WIDTH / 2;
+                            save_msgRect.y = saveRect.y + saveRect.h;
+
+                            SDL_RenderCopy(renderer, save_msgTexture, NULL, &save_msgRect);
+
+                            SDL_RenderPresent(renderer);
                         default:
                             break;
                         }
@@ -196,8 +318,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    TTF_CloseFont(font);
-    SDL_DestroyTexture(textTexture);
+    TTF_CloseFont(menufont);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     TTF_Quit();
