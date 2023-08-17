@@ -162,7 +162,7 @@ void create_maze(int *cells, int Width, int Height)
     {
         for (int y = 1; y < Height - 1; y++)
         {
-            int add_path = rand() % 100;
+            int add_path = rand() % 50;
             if (add_path == 0)
             {
                 int dir = rand() % 4;
@@ -231,6 +231,7 @@ void draw_maze(SDL_Renderer *renderer, int *cells, int Width, int Height, int Pa
             }
         }
     }
+    // green cell at the end
     for (int px = 0; px < PathWidth; px++)
     {
         for (int py = 0; py < PathWidth; py++)
@@ -239,4 +240,49 @@ void draw_maze(SDL_Renderer *renderer, int *cells, int Width, int Height, int Pa
         }
     }
     SDL_RenderPresent(renderer);
+}
+
+#define drawPixelSVG(x, y, size) fprintf(file, "<rect x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" fill=\"white\" />\n", x, y, size, size)
+
+void saveMazeAsSVG(const char *filename, int *cells, int Width, int Height, int PathWidth)
+{
+    int sz = 500 / (4 * Height);
+    FILE *file = fopen(filename, "w");
+    if (file == NULL)
+    {
+        printf("Error opening file for writing.");
+        return;
+    }
+
+    fprintf(file, "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n");
+    fprintf(file, "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" "
+                  "\"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">\n");
+    fprintf(file, "<svg width=\"500\" height=\"500\" xmlns=\"http://www.w3.org/2000/svg\">\n");
+
+    fprintf(file, "<rect x=\" 0 \" y=\" 0 \" width=\" 500 \" height=\" 500 \" fill=\" black \" />\n");
+
+    for (int x = 0; x < Width; x++)
+    {
+        for (int y = 0; y < Height; y++)
+        {
+            for (int px = 0; px < PathWidth; px++)
+            {
+                for (int py = 0; py < PathWidth; py++)
+                {
+                    drawPixelSVG((x * (PathWidth + 1) + px) * sz, (y * (PathWidth + 1) + py) * sz, sz);
+                }
+            }
+
+            for (int p = 0; p < PathWidth; p++)
+            {
+                if (cells[y * Width + x] & CELL_PATH_S)
+                    drawPixelSVG((x * (PathWidth + 1) + p) * sz, (y * (PathWidth + 1) + PathWidth) * sz, sz); // Draw South Passage
+                if (cells[y * Width + x] & CELL_PATH_E)
+                    drawPixelSVG((x * (PathWidth + 1) + PathWidth) * sz, (y * (PathWidth + 1) + p) * sz, sz); // Draw East Passage
+            }
+        }
+    }
+    fprintf(file, "</svg>\n");
+
+    fclose(file);
 }

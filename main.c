@@ -12,13 +12,11 @@ int main(int argc, char *argv[])
     SDL_DisplayMode displayMode;
     SDL_GetCurrentDisplayMode(0, &displayMode);
 
-    int window_height = 0.8 * displayMode.h, window_width = window_height;
+    int window_height = 0.8 * displayMode.h, window_width = 0.8*displayMode.w;
 
     // Maze parameters
     int *m_cells;
-    int MazeWidth, MazeHeight, PathWidth = 3;
-    scanf("%d", &MazeHeight);
-    MazeWidth = MazeHeight;
+    int MazeWidth=10, MazeHeight=10, PathWidth = 3;
     int PixelSize = (window_height) / (4.0 * MazeHeight);
     m_cells = (int *)calloc(MazeWidth * MazeHeight, sizeof(int));
     m_cells[0] |= CURRENT_CELL;
