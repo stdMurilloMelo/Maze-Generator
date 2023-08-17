@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
-#include "maze.h"
+#include "MazeGeneratorStuff.h"
 
 #define WINDOW_WIDTH 0.8 * displayMode.w
 #define WINDOW_HEIGHT 0.8 * displayMode.h
