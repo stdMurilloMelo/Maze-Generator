@@ -4,8 +4,8 @@
 #include <stdbool.h>
 #include "MazeGeneratorStuff.h"
 
-#define WINDOW_WIDTH 600
-#define WINDOW_HEIGHT 600
+#define WINDOW_WIDTH 0.8*displayMode.h
+#define WINDOW_HEIGHT 0.8*displayMode.h
 
 SDL_Window *window = NULL;
 SDL_Renderer *renderer = NULL;
@@ -148,19 +148,19 @@ int main(int argc, char *argv[])
                                     for (int py = 0; py < PathWidth; py++)
                                     {
                                         if (cells[y * Width + x] & CELL_VISITED)
-                                            drawPseudoPixel(renderer, x * (PathWidth + 1) + px, y * (PathWidth + 1) + py, 255, 255, 255, 6);
+                                            drawPseudoPixel(renderer, x * (PathWidth + 1) + px, y * (PathWidth + 1) + py, 255, 255, 255, WINDOW_HEIGHT/100);
                                         else
-                                            drawPseudoPixel(renderer, x * (PathWidth + 1) + px, y * (PathWidth + 1) + py, 0, 0, 255, 6);
-                                        drawPseudoPixel(renderer, m_stack.array[m_stack.top].x * (PathWidth + 1) + px, m_stack.array[m_stack.top].y * (PathWidth + 1) + py, 255, 0, 0, 6);
+                                            drawPseudoPixel(renderer, x * (PathWidth + 1) + px, y * (PathWidth + 1) + py, 0, 0, 255, WINDOW_HEIGHT/100);
+                                        drawPseudoPixel(renderer, m_stack.array[m_stack.top].x * (PathWidth + 1) + px, m_stack.array[m_stack.top].y * (PathWidth + 1) + py, 255, 0, 0, WINDOW_HEIGHT/100);
                                     }
                                 }
 
                                 for (int p = 0; p < PathWidth; p++)
                                 {
                                     if (cells[y * Width + x] & CELL_PATH_S)
-                                        drawPseudoPixel(renderer, x * (PathWidth + 1) + p, y * (PathWidth + 1) + PathWidth, 255, 255, 255, 6); // Draw South Passage
+                                        drawPseudoPixel(renderer, x * (PathWidth + 1) + p, y * (PathWidth + 1) + PathWidth, 255, 255, 255, WINDOW_HEIGHT/100); // Draw South Passage
                                     if (cells[y * Width + x] & CELL_PATH_E)
-                                        drawPseudoPixel(renderer, x * (PathWidth + 1) + PathWidth, y * (PathWidth + 1) + p, 255, 255, 255, 6); // Draw East Passage
+                                        drawPseudoPixel(renderer, x * (PathWidth + 1) + PathWidth, y * (PathWidth + 1) + p, 255, 255, 255, WINDOW_HEIGHT/100); // Draw East Passage
                                 }
                             }
                         }
