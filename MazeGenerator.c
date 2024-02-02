@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    TTF_Font *menufont = TTF_OpenFont(".fonts/NATS.ttf", WINDOW_WIDTH / 10);
+    TTF_Font *menufont = TTF_OpenFont("./fonts/NATS.ttf", WINDOW_WIDTH / 10);
     if (!menufont)
     {
         printf("Font loading failed\n");
