@@ -50,14 +50,14 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    TTF_Font *menufont = TTF_OpenFont("/usr/share/fonts/truetype/teluguvijayam/NATS.ttf", WINDOW_WIDTH / 10);
+    TTF_Font *menufont = TTF_OpenFont(".fonts/NATS.ttf", WINDOW_WIDTH / 10);
     if (!menufont)
     {
         printf("Font loading failed\n");
         return -1;
     }
 
-    TTF_Font *mazefont = TTF_OpenFont("/usr/share/fonts/truetype/teluguvijayam/NATS.ttf", WINDOW_WIDTH / 25);
+    TTF_Font *mazefont = TTF_OpenFont("./fonts/NATS.ttf", WINDOW_WIDTH / 25);
     if (!mazefont)
     {
         printf("Font loading failed\n");
